@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفاصيل البيان الرسمي | ثانوية بسجراري لخضر</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { brand: { dark: '#020617', navy: '#0f172a', gold: '#d97706', light: '#f8fafc' } } } }
+        }
+    </script>
+    <style>
+        .font-ar { font-family: 'Cairo', sans-serif; }
+        .font-fr { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="font-ar bg-brand-light text-brand-navy min-h-screen flex flex-col justify-between">
+
+    <header class="bg-brand-dark text-white py-6 border-b border-brand-gold/20 shadow-md px-4">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-base font-bold text-brand-gold">الفضاء الإخباري للمؤسسة</h1>
+            <a href="index.html" class="text-xs bg-slate-900 border border-slate-700 hover:border-brand-gold px-3 py-1.5 rounded-lg text-slate-300 transition-colors">← العودة للرئيسية</a>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto w-full px-4 py-12 flex-1">
+        <article id="newsArticleCard" class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-10 shadow-sm space-y-6 hidden">
+            <div class="border-b border-slate-100 pb-4 space-y-2">
+                <span id="newsBadge" class="bg-brand-gold text-brand-dark text-[10px] font-black px-2.5 py-1 rounded-full uppercase">بيان رسمي</span>
+                <span id="newsDate" class="text-xs text-slate-400 font-mono block pt-1"></span>
+                <h2 id="newsTitle" class="text-xl sm:text-3xl font-black text-brand-dark leading-snug"></h2>
+            </div>
+            
+            <div class="space-y-8 divide-y divide-slate-100">
+                <p id="newsContentAr" class="text-slate-700 text-sm sm:text-base leading-relaxed text-justify whitespace-pre-line font-light"></p>
+                <p id="newsContentFr" class="text-slate-600 text-sm sm:text-base leading-relaxed text-justify whitespace-pre-line font-light font-fr pt-6 text-left" dir="ltr"></p>
+            </div>
+        </article>
+
+        <div id="detailsLoader" class="text-center py-20 text-slate-400 animate-pulse text-xs">جاري سحب نص البيان والتحقق من التوقيع الرقمي...</div>
+    </main>
+
+    <footer class="bg-brand-dark text-slate-500 py-6 text-center text-xs border-t border-slate-900">
+        <p>&copy; 2026 ثانوية بسجراري لخضر بوفاطيس. جميع الحقوق محفوظة.</p>
+    </footer>
+
+    <script>
+        const SUPABASE_URL = "https://gqyazdzzvhkjkrjmqphb.supabase.co"; 
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxeWF6ZHp6dmhramtyam1xcGhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0MDk2MTUsImV4cCI6MjA5ODk4NTYxNX0.M6yoxcU5MLaSZiceKzI5HlUncJzx6A1yZuCWerkyBVI";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const newsId = urlParams.get('id');
+
+            if(!newsId) {
+                document.getElementById('detailsLoader').innerText = "خطأ: لم يتم تحديد معرّف الخبر بشكل صحيح.";
+                return;
+            }
+
+            try {
+                const { data: item, error } = await supabaseClient
+                    .from('news')
+                    .select('*')
+                    .eq('id', newsId)
+                    .single();
+
+                if(item) {
+                    document.getElementById('newsDate').innerText = "تاريخ النشر المعتمد: " + new Date(item.published_at).toISOString().split('T')[0];
+                    document.getElementById('newsTitle').innerText = item.title_ar;
+                    document.getElementById('newsContentAr').innerText = item.content_ar;
+                    document.getElementById('newsContentFr').innerText = item.content_fr;
+                    
+                    if(item.is_featured) {
+                        const badge = document.getElementById('newsBadge');
+                        badge.className = "bg-red-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full";
+                        badge.innerText = "بيان عاجل وهام جداً";
+                    }
+
+                    document.getElementById('detailsLoader').classList.add('hidden');
+                    document.getElementById('newsArticleCard').classList.remove('hidden');
+                } else {
+                    document.getElementById('detailsLoader').innerText = "البيان المطلوب غير موجود أو تم حذفه من قبل الإدارة.";
+                }
+            } catch (err) {
+                document.getElementById('detailsLoader').innerText = "فشل الاتصال بخادم قاعدة البيانات.";
+            }
+        });
+    </script>
+</body>
+</html>
